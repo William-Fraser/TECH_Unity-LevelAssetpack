@@ -5,81 +5,111 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     // ----- variables
-    //object
+    //model
     private Rigidbody m_Rigidbody;
-    public float _movement_speed = 7f;
-    public float _jump_speed = 50f;
-    private bool _isGrounded = true;
-    private Vector3 _playerSpawn;
+    private bool m_isGrounded = true;
+    private Vector3 m_playerSpawn;
+    private MeshRenderer m_MeshRemover;
+    public int _respawnTime = 3;
+    public float _movementSpeed = 7f;
+    public float _jumpHeight = 10f;
 
     //camera
-    public GameObject view_camera;
     private Rigidbody c_Rigidbody;
-    public float _mouseX_speed = 2f;
-    public float _mouseY_speed = 2f;
+    private Quaternion c_Rotation;
+
+    public GameObject viewCamera;
+    public float _mouseXSpeed = 1f;
+    public float _mouseYSpeed = 1f;
+    public float _MaxLookHeight = 60;
+    public float _MinLookHeight = -60;
 
 
     // Start is called before the first frame update
     void Start()
     {
         //save players origin as spawn
-        _playerSpawn = this.transform.position;
+        m_playerSpawn = this.transform.position;
 
-        //stop player from falling over
+        //initializes the Player and Camera
         m_Rigidbody = GetComponent<Rigidbody>();
-        m_Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-
-        //stop camera rotating on z axis (view turns upsidedown)
-        c_Rigidbody = view_camera.GetComponent<Rigidbody>();
-        c_Rigidbody.constraints = RigidbodyConstraints.FreezeRotationZ;
-
-        // locks cursor to centre screen and turns invisible
+        m_MeshRemover = GetComponent<MeshRenderer>();
+        c_Rigidbody = viewCamera.GetComponent<Rigidbody>();
         Cursor.lockState = CursorLockMode.Locked;
+        c_Rotation = viewCamera.transform.rotation;
+
+
+        StopFall(); // stops model from falling over
     }
 
     // Update is called once per frame
     void Update()
     {
         //move the player
-        float translateForwardBack = Input.GetAxis("Vertical");
-        float translateSidetoSide = Input.GetAxis("Horizontal");
-        gameObject.transform.Translate(0, 0, translateForwardBack * _movement_speed * Time.deltaTime);
-        gameObject.transform.Translate(translateSidetoSide * _movement_speed * Time.deltaTime, 0, 0);
+        MoveController();
 
-        //player view move
-        float mouseX = _mouseX_speed * Input.GetAxis("Mouse X");
-        gameObject.transform.Rotate(0, mouseX, 0);
+        //player view control X, Y
+        ViewController();
 
-        //player jumps
-        if (Input.GetKeyDown("space") && _isGrounded) {
-            m_Rigidbody.AddForce(Vector3.up * _jump_speed, ForceMode.Impulse);
-            _isGrounded = false;
-        }
-
-        //holds Y view move, stops neck from breaking --- FIX
-        float neckCheck = view_camera.transform.rotation.x;
-        if (neckCheck < 60.0f && neckCheck > -60.0f) {
-            float mouseY = _mouseY_speed * Input.GetAxis("Mouse Y");
-            view_camera.transform.Rotate(-mouseY, 0, 0);
-        }
-        else { }
     }
     private void OnCollisionStay(Collision collision)
     {
-        _isGrounded = true;
+        m_isGrounded = true;
     }
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Killbox"){
-            this.transform.position = _playerSpawn;
+        if (other.tag == "Killbox") { // polish with game over screen and possible restart button / needs state machine
+            m_MeshRemover.enabled = false;
+            StartCoroutine(WaitForRespawn());
+            this.transform.position = m_playerSpawn;
+            m_MeshRemover.enabled = true;
         }
         if (other.tag == "Checkpoint") {
-            _playerSpawn = this.transform.position;
+            m_playerSpawn = this.transform.position;
         }
         if (other.tag == "Teleport")
         {
-            this.transform.Rotate(0,+180,0);
-            this.transform.position = other.GetComponent<DestinationHolder>().destination;
+            this.transform.localPosition = other.GetComponent<DestinationHolder>().destination + (Vector3.forward * 2);
         }
+    }
+    private void StopFall()//Stops the player from falling over 
+    {
+        m_Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        c_Rigidbody.constraints = RigidbodyConstraints.FreezeRotationZ;
+    }
+    private void ViewController() 
+    {
+        //sets rotation on the x axis
+        float xRotation = Input.GetAxis("Mouse X") * _mouseXSpeed;
+        c_Rotation.y += xRotation;
+
+        //sets rotation on the y axis
+        c_Rotation.x += Input.GetAxis("Mouse Y") * _mouseYSpeed*(-1); //rotates on the x axis to look up and down
+        c_Rotation.x = Mathf.Clamp(c_Rotation.x, _MinLookHeight, _MaxLookHeight); // clamp locks range to stop neck from breaking
+
+        //rotates view point
+        transform.Rotate(0,xRotation,0);
+        viewCamera.transform.rotation = Quaternion.Euler(c_Rotation.x, c_Rotation.y, c_Rotation.z);
+        Debug.Log(c_Rotation.x);
+    }
+    private void MoveController() 
+    {
+        float translateForwardBack = Input.GetAxis("Vertical");
+        float translateSidetoSide = Input.GetAxis("Horizontal");
+        gameObject.transform.Translate(0, 0, translateForwardBack * _movementSpeed * Time.deltaTime);
+        gameObject.transform.Translate(translateSidetoSide * _movementSpeed * Time.deltaTime, 0, 0);
+
+        //player jumps
+        if (Input.GetKeyDown("space") && m_isGrounded) {
+            m_Rigidbody.AddForce(Vector3.up * _jumpHeight, ForceMode.Impulse);
+            m_isGrounded = false;
+        }
+        if (m_isGrounded == false) {
+            float gravityBoost = 1 * 2 * Time.deltaTime;
+            gameObject.transform.Translate(0, gravityBoost * Time.deltaTime, 0);
+        }
+    }
+    IEnumerator WaitForRespawn() {
+        yield return new WaitForSeconds(_respawnTime);
     }
 }
