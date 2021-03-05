@@ -4,20 +4,21 @@ using UnityEngine;
 
 public class Pickup : MonoBehaviour
 {
-    //enable if pickup respawns
-    public bool enableRespawn = false;
 
     public GameObject pickUp;
     public int timeUntilRespawn = 2;
 
     private float rotSpeed = 50f;
+    [HideInInspector]
     public bool pickedUp;
     private bool respawning;
     private float timeStampCollectedTime;
     private float respawnTimeElapsed;
     //private float timer = 0.0f;
-    private Vector3 spinpoint = new Vector3(0, 1, 0);    
+    private Vector3 spinpoint = new Vector3(0, 0, 1);    
     
+    //enable if pickup respawns
+    public bool enableRespawn = false;
 
     // Start is called before the first frame update
     void Start()
@@ -32,22 +33,26 @@ public class Pickup : MonoBehaviour
         {
             if (respawning == false) 
             {
-                Debug.Log("Picked up");
-                pickUp.GetComponent<MeshRenderer>().enabled = false;
-                pickUp.GetComponent<SphereCollider>().enabled = false;
-                timeStampCollectedTime = Time.time;
-                respawning = true;
+                if (enableRespawn == false)
+                {
+                    pickUp.SetActive(false);
+                }
+                else
+                {
+                    Debug.Log("Picked up");
+                    pickUp.GetComponent<MeshRenderer>().enabled = false;
+                    pickUp.GetComponent<SphereCollider>().enabled = false;
+                    timeStampCollectedTime = Time.time;
+                    respawning = true;
+                }
             }
 
-                pickedUp = false;
-        }
-        if (enableRespawn == false)
-        {
-            pickUp.SetActive(false);
+            pickedUp = false;
         }
         else
         {
-            if (respawning == true)
+            
+            if (enableRespawn&&respawning == true)
             {
                 respawnTimeElapsed = Time.time - timeStampCollectedTime;
                 if (respawnTimeElapsed >= timeUntilRespawn)

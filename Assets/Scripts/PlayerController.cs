@@ -1,18 +1,24 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
     // ----- variables
     //model
     private Rigidbody m_Rigidbody;
+    private Quaternion m_Rotation;
     private bool m_isGrounded = true;
     private Vector3 m_playerSpawn;
     private MeshRenderer m_MeshRemover;
-    public int _respawnTime = 3;
+    public GameObject RespawnFog;
     public float _movementSpeed = 7f;
     public float _jumpHeight = 10f;
+
+    //bools to handle respawn smoothing
+    private bool respawning = false;
+    private bool fogfade = false;
 
     //camera
     private Rigidbody c_Rigidbody;
@@ -30,6 +36,7 @@ public class PlayerController : MonoBehaviour
     {
         //save players origin as spawn
         m_playerSpawn = this.transform.position;
+        m_Rotation = this.transform.rotation;
 
         //initializes the Player and Camera
         m_Rigidbody = GetComponent<Rigidbody>();
@@ -41,7 +48,6 @@ public class PlayerController : MonoBehaviour
 
         StopFall(); // stops model from falling over
     }
-
     // Update is called once per frame
     void Update()
     {
@@ -50,6 +56,12 @@ public class PlayerController : MonoBehaviour
 
         //player view control X, Y
         ViewController();
+
+        if (respawning) {
+            this.transform.position = m_playerSpawn;
+            respawning = false;
+            //RespawnTime();
+        }
 
     }
     private void OnCollisionStay(Collision collision)
@@ -60,8 +72,7 @@ public class PlayerController : MonoBehaviour
     {
         if (other.tag == "Killbox") { // polish with game over screen and possible restart button / needs state machine
             m_MeshRemover.enabled = false;
-            StartCoroutine(WaitForRespawn());
-            this.transform.position = m_playerSpawn;
+            respawning = true;
             m_MeshRemover.enabled = true;
         }
         if (other.tag == "Checkpoint") {
@@ -70,6 +81,16 @@ public class PlayerController : MonoBehaviour
         if (other.tag == "Teleport")
         {
             this.transform.localPosition = other.GetComponent<DestinationHolder>().destination + (Vector3.forward * 2);
+        }
+        if (other.tag == "Pickup")
+        {
+            Debug.Log("PICKUP initiated");
+            other.gameObject.GetComponent<Pickup>().pickedUp = true;
+        }
+        if (other.tag == "Enemy")
+        {
+            other.GetComponentInParent<Collider>().enabled = false;
+            other.GetComponentInParent<MeshRenderer>().enabled = false;
         }
     }
     private void StopFall()//Stops the player from falling over 
@@ -81,6 +102,7 @@ public class PlayerController : MonoBehaviour
     {
         //sets rotation on the x axis
         float xRotation = Input.GetAxis("Mouse X") * _mouseXSpeed;
+        m_Rotation.y += xRotation;
         c_Rotation.y += xRotation;
 
         //sets rotation on the y axis
@@ -109,7 +131,30 @@ public class PlayerController : MonoBehaviour
             gameObject.transform.Translate(0, gravityBoost * Time.deltaTime, 0);
         }
     }
-    IEnumerator WaitForRespawn() {
-        yield return new WaitForSeconds(_respawnTime);
-    }
+    //private void RespawnTime()
+    //{
+    //    Image Fog = RespawnFog.GetComponent<Image>();
+    //    float alpha = Fog.color.a;
+    //    Debug.Log("Fog Value "+Fog.color.a);
+    //    if (fogfade == false)
+    //    {
+    //        alpha = Mathf.Lerp(0, 1, 0.05f);
+    //        if (alpha > 255) alpha = 255;
+    //    }
+    //    else if (fogfade == true)
+    //    {
+    //        alpha = Mathf.Lerp(1, 0, 0.05f);
+    //        if (alpha < 0) alpha = 0;
+    //    }
+    //    if (alpha == 1)
+    //    {
+    //        this.transform.position = m_playerSpawn;
+    //        fogfade = true;
+    //    }
+    //    else if (alpha == 0)
+    //    {
+    //        respawning = false;
+    //        fogfade = false;
+    //    }
+    //}
 }

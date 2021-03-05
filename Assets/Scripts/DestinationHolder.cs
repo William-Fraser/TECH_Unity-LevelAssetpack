@@ -7,7 +7,6 @@ public class DestinationHolder : MonoBehaviour
     public GameObject destination_Object;
     [HideInInspector]
     public Vector3 destination;
-    [HideInInspector]
     
     // Start is called before the first frame update
     void Start()
