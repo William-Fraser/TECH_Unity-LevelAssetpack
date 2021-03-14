@@ -23,7 +23,7 @@ public class SlidingDoorVertical : MonoBehaviour
     {
         if (openDoor == true) // open the door
         {
-            Debug.Log($"Y pos : {door.transform.localPosition.y} open pos : {openPos}");
+            //Debug.Log($"Y pos : {door.transform.localPosition.y} open pos : {openPos}");
             if (door.transform.localPosition.y >= openPos)
             {
                 door.transform.localPosition += new Vector3(0f, -(speed * Time.deltaTime), 0f);
@@ -41,6 +41,10 @@ public class SlidingDoorVertical : MonoBehaviour
         }
     }
     private void OnTriggerEnter(Collider other)
+    {
+        openDoor = true;
+    }
+    private void OnTriggerStay(Collider other)
     {
         openDoor = true;
     }

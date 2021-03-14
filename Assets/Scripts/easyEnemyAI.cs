@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyAI : MonoBehaviour
+public class easyEnemyAI : MonoBehaviour
 {
     public GameObject Trigger;
     public GameObject e_Object;
