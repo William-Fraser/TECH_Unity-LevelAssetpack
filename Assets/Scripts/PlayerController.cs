@@ -11,24 +11,30 @@ public class PlayerController : MonoBehaviour
     private Quaternion m_Rotation;
     private bool m_isGrounded = true;
     private Vector3 m_playerSpawn;
-    private MeshRenderer m_MeshRemover;
+    
+    [Header("Player Movement")]
     public float _movementSpeed = 7f;
-    public float _jumpHeight = 10f;
-
-    //fields for respawn
-    public GameObject RespawnFog;
-    private Image fog;
-    private bool respawning;
+    public float _jumpHeight = 7f;
 
     //camera
-    private Rigidbody c_Rigidbody;
     private Quaternion c_Rotation;
 
-    public GameObject viewCamera;
+    [Header("Camera")]
+    new public GameObject camera;
     public float _mouseXSpeed = 1f;
     public float _mouseYSpeed = 1f;
+    [Range(1f, 60f)]
     public float _MaxLookHeight = 60;
+    [Range(-1f, -60f)]
     public float _MinLookHeight = -60;
+
+    //fields for respawn
+    private Image fog;
+    private bool respawning;
+    private bool respawnOnce;
+    
+    [Header("Respawn")]
+    public GameObject RespawnFog;
 
 
     // Start is called before the first frame update
@@ -40,37 +46,34 @@ public class PlayerController : MonoBehaviour
 
         //initializes the Player and Camera
         m_Rigidbody = GetComponent<Rigidbody>();
-        m_MeshRemover = GetComponent<MeshRenderer>();
-        c_Rigidbody = viewCamera.GetComponent<Rigidbody>();
         Cursor.lockState = CursorLockMode.Locked;
-        c_Rotation = viewCamera.transform.rotation;
+        Cursor.visible = false;
+        c_Rotation = camera.transform.rotation;
 
         //initialization for respawn
         RespawnFog.SetActive(true);
         fog = RespawnFog.GetComponent<Image>();
-        respawning = false;
-        fog.canvasRenderer.SetAlpha(0);
+        respawning = true;
+        respawnOnce = false;
+        //fog.canvasRenderer.SetAlpha(0);
 
-
-        //StopFall(); // stops model from falling over
     }
     // Update is called once per frames
     void Update()
     {
-
         //move the player
         MoveController();
 
         //player view control X, Y
         ViewController();
 
-        if (respawning)
+        if (respawning && respawnOnce == false)
         {
+            respawnOnce = true;
             fog.CrossFadeAlpha(1, .5f, false);
             Debug.Log("Run this Once");
-            StartCoroutine("RespawnTimer");
+            StartCoroutine("Respawn");
         }
-        //StopFall();
     }
     private void OnCollisionStay(Collision collision)
     {
@@ -79,10 +82,8 @@ public class PlayerController : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other.tag == "Killbox")
-        { // polish with game over screen and possible restart button / needs state machine
-            //m_MeshRemover.enabled = false;
+        { 
             respawning = true;
-            //m_MeshRemover.enabled = true;
         }
         if (other.tag == "Checkpoint")
         {
@@ -90,7 +91,7 @@ public class PlayerController : MonoBehaviour
         }
         if (other.tag == "Teleport")
         {
-            this.transform.localPosition = other.GetComponent<DestinationHolder>().destination + (Vector3.forward * 2);
+            this.transform.position = other.GetComponent<DestinationHolder>().destination;
         }
         if (other.tag == "Pickup")
         {
@@ -103,12 +104,6 @@ public class PlayerController : MonoBehaviour
             other.GetComponentInParent<MeshRenderer>().enabled = false;
         }
     }
-    //private void StopFall()//Stops the player from falling over 
-    //{
-    //    m_Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX;
-    //    m_Rigidbody.constraints = RigidbodyConstraints.FreezeRotationZ;
-    //    c_Rigidbody.constraints = RigidbodyConstraints.FreezeRotationZ;
-    //}
     private void ViewController()
     {
         //sets rotation on the x axis
@@ -122,7 +117,7 @@ public class PlayerController : MonoBehaviour
 
         //rotates view point
         transform.Rotate(0, xRotation, 0);
-        viewCamera.transform.rotation = Quaternion.Euler(c_Rotation.x, c_Rotation.y, c_Rotation.z);
+        camera.transform.rotation = Quaternion.Euler(c_Rotation.x, c_Rotation.y, c_Rotation.z);
         //Debug.Log(c_Rotation.x);
     }
     private void MoveController()
@@ -146,13 +141,18 @@ public class PlayerController : MonoBehaviour
     }
 
     //handles respawn animations
-    IEnumerator RespawnTimer()
+    IEnumerator Respawn()
     {
         Debug.Log("Starting respawntimer");
         yield return new WaitForSeconds(1);
         Debug.Log("Respawning");
+
+        //reposition
         gameObject.transform.position = m_playerSpawn;
+
+        //remove respawn fog
         fog.CrossFadeAlpha(0, .7f, false);
         respawning = false;
-    }//// detect when screen is black
+        respawnOnce = false; // set once to false to respawn once again
+    }
 }

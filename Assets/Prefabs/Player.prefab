@@ -401,9 +401,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _movementSpeed: 7
   _jumpHeight: 10
-  RespawnFog: {fileID: 0}
-  viewCamera: {fileID: 6023200168993300187}
+  camera: {fileID: 6023200168993300187}
   _mouseXSpeed: 2
   _mouseYSpeed: 2
   _MaxLookHeight: 60
   _MinLookHeight: -60
+  RespawnFog: {fileID: 5167590206515015767}

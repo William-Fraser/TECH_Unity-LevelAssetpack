@@ -4,9 +4,15 @@ using UnityEngine;
 
 public class SlidingDoorVertical : MonoBehaviour
 {
-
-    public float speed = 1f;
+    //public fields
+    [Header("Door")]
     public GameObject door;
+    public float speed = 0.5f;
+    [Header("Lock Switch")]
+    public bool locked = false;
+    public GameObject KeySwitch;
+
+    //private fields
     private bool openDoor = false;
     private float closedPos;
     private float openPos;
@@ -16,28 +22,32 @@ public class SlidingDoorVertical : MonoBehaviour
     {
         closedPos = door.transform.localPosition.y;
         openPos = closedPos - 5;
-        Debug.Log("Sliding Door "+closedPos+" "+ openPos);
+        Debug.Log("Sliding Door, closed posY: "+closedPos+", opened posY: "+ openPos);
     }
     // Update is called once per frame
     void Update()
     {
-        if (openDoor == true) // open the door
+        //unlocks if button is pressed
+        if (locked)
         {
-            //Debug.Log($"Y pos : {door.transform.localPosition.y} open pos : {openPos}");
-            if (door.transform.localPosition.y >= openPos)
+            locked = KeySwitch.GetComponent<LockSwitch>().Locked();
+        }
+
+        // open the door
+        if (openDoor == true && locked == false)     
+        {
+            if (door.transform.localPosition.y >= openPos) //stops door at open position
             {
                 door.transform.localPosition += new Vector3(0f, -(speed * Time.deltaTime), 0f);
             }
-            
         }
-        else if (openDoor == false) // close the door
+        // close the door
+        else if (openDoor == false)
         {
-
-            if (door.transform.localPosition.y <= closedPos)
+            if (door.transform.localPosition.y <= closedPos) // stops door at closed position
             {
-                door.transform.localPosition += new Vector3(0f, (speed * Time.deltaTime), 0f);
+                door.transform.localPosition += new Vector3(0f, speed * Time.deltaTime, 0f);
             }
-            
         }
     }
     private void OnTriggerEnter(Collider other)

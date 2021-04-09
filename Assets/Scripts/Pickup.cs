@@ -4,21 +4,24 @@ using UnityEngine;
 
 public class Pickup : MonoBehaviour
 {
+    [Header("Collectable")]
+    public GameObject pickUpObject;
+    public GameObject rotationAxis;
+    public float rotationSpeed = 50f;
 
-    public GameObject pickUp;
+    [Header("Respawn")]
+    public bool enableRespawn = false;
     public int timeUntilRespawn = 2;
-
-    private float rotSpeed = 50f;
+    
     [HideInInspector]
     public bool pickedUp;
+
+    //private fields
     private bool respawning;
     private float timeStampCollectedTime;
     private float respawnTimeElapsed;
-    //private float timer = 0.0f;
-    private Vector3 spinpoint = new Vector3(0, 0, 1);    
+    private Vector3 spinpoint = new Vector3(0, 1, 0);    
     
-    //enable if pickup respawns
-    public bool enableRespawn = false;
 
     // Start is called before the first frame update
     void Start()
@@ -28,20 +31,20 @@ public class Pickup : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        gameObject.transform.Rotate(spinpoint * rotSpeed * Time.deltaTime); // rotates pick up in realtime
+        rotationAxis.transform.Rotate(spinpoint * rotationSpeed * Time.deltaTime); // rotates pick up in realtime
         if (pickedUp == true)
         {
             if (respawning == false) 
             {
                 if (enableRespawn == false)
                 {
-                    pickUp.SetActive(false);
+                    pickUpObject.SetActive(false);
                 }
                 else
                 {
                     Debug.Log("Picked up");
-                    pickUp.GetComponent<MeshRenderer>().enabled = false;
-                    pickUp.GetComponent<SphereCollider>().enabled = false;
+                    pickUpObject.GetComponent<MeshRenderer>().enabled = false;
+                    pickUpObject.GetComponent<SphereCollider>().enabled = false;
                     timeStampCollectedTime = Time.time;
                     respawning = true;
                 }
@@ -58,8 +61,8 @@ public class Pickup : MonoBehaviour
                 if (respawnTimeElapsed >= timeUntilRespawn)
                 {
                     Debug.Log("Respawning");
-                    pickUp.GetComponent<MeshRenderer>().enabled = true;
-                    pickUp.GetComponent<SphereCollider>().enabled = true;
+                    pickUpObject.GetComponent<MeshRenderer>().enabled = true;
+                    pickUpObject.GetComponent<SphereCollider>().enabled = true;
                     respawning = false;
                 }
             }
